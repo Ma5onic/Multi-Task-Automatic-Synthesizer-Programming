@@ -34,7 +34,7 @@ def class_acuracy(y_true,y_predict,oh_code):
 
     return correct_classes / total_classes
 
-def generate_audio(params, synth):
+def generate_audio(params, synth, save_state_path=None):
 
     if synth == "serum":
         #path to plugin
@@ -68,7 +68,13 @@ def generate_audio(params, synth):
 
     for j in range(len(np.squeeze(params))):
         synth.set_parameter(j,params[j])
-        
+
+    if save_state_path:
+            try:
+                synth.save_state(save_state_path)  # Save synth state for preset transfer
+            except Exception as e:
+                print(f"Error saving synth state: {e}")
+
     #play new note
     synth.clear_midi()
     synth.add_midi_note(60, 255,0.25,3)
@@ -262,7 +268,7 @@ def main():
 
             params = out[synth_to_index[test_synth[s_index]] + 1][0]
             
-            audio_p = generate_audio(params, synth)
+            audio_p = generate_audio(params, synth, save_state_path=name + "_" + synth + "_L" + str(args.latent_size) + "_state_multi.bin")
 
             wavfile.write(name + "_" + synth + "_L" + str(args.latent_size) + "_p_multi.wav", SAMPLING_RATE, audio_p)
 
@@ -272,7 +278,7 @@ def main():
         params = out[1]
         params = params[:int(np.sum(test_masks[s_index]))]
         
-        audio_p = generate_audio(params, synth)
+        audio_p = generate_audio(params, synth, save_state_path=name + "_" + synth + "_L" + str(args.latent_size) + "_state_single.bin")
         wavfile.write(name + "_" + synth + "_p_single.wav", SAMPLING_RATE, audio_p)
 
     if args.model == "serum":
@@ -280,7 +286,7 @@ def main():
 
         params = out[1]
         
-        audio_p = generate_audio(params, "serum")
+        audio_p = generate_audio(params, synth, save_state_path=name + "_" + synth + "_L" + str(args.latent_size) + "_state_serum.bin")
         wavfile.write(name + "_" + synth + "_p_serum.wav", SAMPLING_RATE, audio_p)
     
     if args.model == "diva":
@@ -288,7 +294,7 @@ def main():
 
         params = out[1]
         
-        audio_p = generate_audio(params, "diva")
+        audio_p = generate_audio(params, synth, save_state_path=name + "_" + synth + "_L" + str(args.latent_size) + "_state_diva.bin")
         wavfile.write(name + "_" + synth + "_p_diva.wav", SAMPLING_RATE, audio_p)
 
     if args.model == "tyrell":
@@ -296,7 +302,7 @@ def main():
 
         params = out[1]
         
-        audio_p = generate_audio(params, "tyrell")
+        audio_p = generate_audio(params, synth, save_state_path=name + "_" + synth + "_L" + str(args.latent_size) + "_state_tyrell.bin")
         wavfile.write(name + "_" + synth + "_p_tyrell.wav", SAMPLING_RATE, audio_p)
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ import librosa
 import matplotlib.pyplot as plt
 import librosa.display
 import dawdreamer as dd
-
+import itertools
 
 
 def getListOfFiles(dirName):
@@ -48,7 +48,6 @@ if __name__ == "__main__":
     engine.set_bpm(120)
     synth = engine.make_plugin_processor("Serum", plugin_path)
     engine.load_graph([(synth, [])])
-    count = 0
 
     #initialize list of asp data
     asp_data = list()
@@ -65,7 +64,7 @@ if __name__ == "__main__":
         
         engine.render(5)
         audio = engine.get_audio()
-        #combine to mon
+        #combine to mono
         audio = audio[0] + audio[1]
         rms = np.sqrt(np.mean(audio**2)) 
 
@@ -105,26 +104,23 @@ if __name__ == "__main__":
             if h_per > 80:
                 l_value = 100
 
-            mel_specs = list()
+            # Define notes and velocities to generate
+            notes = [12 + 12*i for i in range(6)]  # C notes from C2 to C7
+            velocities = [32, 64, 127]  # Three velocity levels
 
-            count += 1
-            print(count)
-
-            #play all twelve notes from c4-b4
-            for note in range(12):
-                
-                #play new note
+            mel_specs = []
+            for note, velocity in itertools.product(notes, velocities):
+                # Play new note
                 synth.clear_midi()
-                synth.add_midi_note(60+ note,255,0.25,3)
-                
+                synth.add_midi_note(note, velocity, 0.25, 3)
+
                 engine.render(5)
                 audio = engine.get_audio()
-                #combine to mon
-                audio = audio[0] + audio[1]
+                audio = audio[0] + audio[1]  # Combine to mono
 
-                #create and normalize mel spectrogram
-                mel_spec = librosa.feature.melspectrogram(y=audio, sr=SAMPLING_RATE,)
-                mel_spec = librosa.power_to_db(mel_spec,ref=np.max)
+                # Create and normalize mel spectrogram
+                mel_spec = librosa.feature.melspectrogram(y=audio, sr=SAMPLING_RATE)
+                mel_spec = librosa.power_to_db(mel_spec, ref=np.max)
                 # mel_spec = mel_spec - np.min(mel_spec)
                 # mel_spec = mel_spec / np.max(mel_spec)
 
